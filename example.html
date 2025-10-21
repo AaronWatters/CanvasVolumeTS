@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CanvasVolumeTS Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        #myCanvas {
+            border: 2px solid #333;
+            background-color: #000;
+            display: block;
+            margin: 20px auto;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        .info {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CanvasVolumeTS Example</h1>
+        <div class="info">
+            <p>This example demonstrates the CanvasVolumeTS library built with TypeScript and tsdown.</p>
+            <p>The library is compiled to vanilla JavaScript for browser use.</p>
+        </div>
+        <canvas id="myCanvas"></canvas>
+    </div>
+
+    <!-- Using IIFE version for direct browser usage -->
+    <script src="dist/index.iife.js"></script>
+    <script>
+        // Using the global CanvasVolumeTS object from the IIFE bundle
+        const { CanvasVolume } = CanvasVolumeTS;
+
+        // Create canvas instance
+        const canvas = document.getElementById('myCanvas');
+        const volume = new CanvasVolume(canvas, {
+            width: 800,
+            height: 600,
+            backgroundColor: '#001122'
+        });
+
+        // Clear and draw some examples
+        volume.clear();
+
+        // Draw some points
+        for (let i = 0; i < 50; i++) {
+            const point = {
+                x: Math.random() * 800,
+                y: Math.random() * 600
+            };
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            volume.drawPoint(point, color, 3 + Math.random() * 5);
+        }
+
+        // Draw some lines
+        for (let i = 0; i < 10; i++) {
+            const start = {
+                x: Math.random() * 800,
+                y: Math.random() * 600
+            };
+            const end = {
+                x: Math.random() * 800,
+                y: Math.random() * 600
+            };
+            volume.drawLine(start, end, '#ffffff', 2);
+        }
+
+        console.log('Canvas dimensions:', volume.getDimensions());
+    </script>
+</body>
+</html>

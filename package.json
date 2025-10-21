@@ -1,0 +1,41 @@
+{
+  "name": "canvasvolumets",
+  "version": "1.0.0",
+  "description": "Simple library for interactive 2d and 3d images on an HTML5 canvas.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "canvas",
+    "html5",
+    "visualization",
+    "2d",
+    "3d",
+    "interactive",
+    "browser"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tsdown": "^0.15.9",
+    "typescript": "^5.9.3"
+  }
+}
