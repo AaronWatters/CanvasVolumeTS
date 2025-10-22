@@ -1,0 +1,94 @@
+
+/**
+ * 3d image volume.
+ * C ordered Uint8Array data.
+ * axis order: z, y, x, channels
+ * z is the slowest axis.
+ */
+
+export class Volume3D {
+  width: number;
+  height: number;
+  depth: number;
+  channels: number;
+  layerSize: number;
+  data: Uint8Array | null;
+
+  constructor(
+    width: number, 
+    height: number, 
+    depth: number, 
+    channels: number=1,
+    data: Uint8Array | null = null
+    ) {
+    // channels must be 1 (grayscale) or 3 (rgb) or 4 (rgba)
+    if (channels !== 1 && channels !== 3 && channels !== 4) {
+      throw new Error('Channels must be 1, 3, or 4');
+    }
+    // width, height, depth must be positive integers
+    if (width <= 0 || height <= 0 || depth <= 0) {
+      throw new Error('Width, height, and depth must be positive integers');
+    }
+    // if data is provided, check its length
+    if (data) {
+      const expectedLength = width * height * depth * channels;
+      if (data.length !== expectedLength) {
+        throw new Error(`Data length ${data.length} does not match expected size ${expectedLength}`);
+      }
+    }
+    this.width = width;
+    this.height = height;
+    this.depth = depth;
+    this.channels = channels;
+    this.layerSize = this.width * this.height * this.channels;
+    this.data = data;
+  };
+  /** Get an image slice at depth z */
+  getSlice(z: number): Uint8Array {
+    if (!this.data) {
+        // return all zeros
+        return new Uint8Array(this.width * this.height * this.channels);
+    }
+    const indexStart = z * this.layerSize;
+    const indexEnd = indexStart + this.layerSize;
+    const slice = this.data.slice(indexStart, indexEnd);
+    return slice;
+  };
+  getImageDataAtSlice(z: number): ImageData {
+    const slice = this.getSlice(z);
+    let rgbaData = new Uint8Array(this.width * this.height * 4);
+    const planeSize = this.width * this.height;
+    if (this.channels === 1) {
+      // grayscale to rgba
+      for (let i = 0; i < planeSize; i++) {
+        const value = slice[i];
+        // value must be defined
+        if (value === undefined) {
+          throw new Error('Invalid pixel value');
+        }
+        const pixelIndex = i * 4;
+        rgbaData[pixelIndex] = value!;
+        rgbaData[pixelIndex + 1] = value!;
+        rgbaData[pixelIndex + 2] = value!;
+        rgbaData[pixelIndex + 3] = 255; // opaque
+      }
+    } else if (this.channels === 3) {
+        // rgb to rgba
+        for (let i = 0; i < planeSize; i++) {
+            const sliceIndex = i * 3;
+            const r = slice[sliceIndex];
+            const g = slice[sliceIndex + 1];
+            const b = slice[sliceIndex + 2];
+            const pixelIndex = i * 4;
+            rgbaData[pixelIndex] = r!;
+            rgbaData[pixelIndex + 1] = g!;
+            rgbaData[pixelIndex + 2] = b!;
+            rgbaData[pixelIndex + 3] = 255; // opaque
+        }
+    } else if (this.channels === 4) {
+        // rgba
+        rgbaData.set(slice);
+    }
+    return new ImageData(new Uint8ClampedArray(rgbaData), this.width, this.height);
+  }
+}
