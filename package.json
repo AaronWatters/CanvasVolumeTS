@@ -18,10 +18,12 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "build:watch": "tsdown --watch",
+    "serve": "http-server . -p 5173 -c-1",
+    "dev": "concurrently -k \"npm:build:watch\" \"npm:serve\""
   },
   "keywords": [
     "canvas",
@@ -35,6 +37,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "concurrently": "^9.2.1",
+    "http-server": "^14.1.1",
     "tsdown": "^0.15.9",
     "typescript": "^5.9.3"
   },
