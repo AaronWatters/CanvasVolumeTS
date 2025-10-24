@@ -33,57 +33,45 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="main-container">
         <h1>CanvasVolumeTS Example</h1>
         <div class="info">
             <p>This example demonstrates the CanvasVolumeTS library built with TypeScript and tsdown.</p>
             <p>The library is compiled to vanilla JavaScript for browser use.</p>
         </div>
-        <canvas id="myCanvas"></canvas>
+        <canvas id="myCanvas" width="500" height="500"></canvas>
     </div>
 
     <!-- Using IIFE version for direct browser usage -->
     <script src="dist/index.iife.js"></script>
     <script>
         // Using the global CanvasVolumeTS object from the IIFE bundle
-        const { CanvasVolume } = CanvasVolumeTS;
+        //const { CanvasVolume } = CanvasVolumeTS;
 
-        // Create canvas instance
-        const canvas = document.getElementById('myCanvas');
-        const volume = new CanvasVolume(canvas, {
-            width: 800,
-            height: 600,
-            backgroundColor: '#001122'
+        // load a sample volume.
+        const url = "./example_data/labels.npy";
+        CanvasVolumeTS.volume.loadNpyVolume(url).then(volume => {
+            // display it on the canvas
+            debugger;
+            const canvas = document.getElementById("myCanvas");
+            const display = new CanvasVolumeTS.display.CanvasVolume(canvas);
+            display.setVolumeData(volume);
+            display.draw();
+            // add a slider after the canvas to control the slice
+            const slider = document.createElement("input");
+            slider.type = "range";
+            slider.min = 0;
+            slider.max = volume.depth - 1;
+            slider.value = display.currentSlice;
+            slider.style.width = "80%";
+            slider.addEventListener("input", (event) => {
+                display.sliceAt(parseInt(event.target.value));
+                display.draw();
+            });
+            const container = document.getElementById("main-container");
+            container.appendChild(slider);
         });
 
-        // Clear and draw some examples
-        volume.clear();
-
-        // Draw some points
-        for (let i = 0; i < 50; i++) {
-            const point = {
-                x: Math.random() * 800,
-                y: Math.random() * 600
-            };
-            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'];
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            volume.drawPoint(point, color, 3 + Math.random() * 5);
-        }
-
-        // Draw some lines
-        for (let i = 0; i < 10; i++) {
-            const start = {
-                x: Math.random() * 800,
-                y: Math.random() * 600
-            };
-            const end = {
-                x: Math.random() * 800,
-                y: Math.random() * 600
-            };
-            volume.drawLine(start, end, '#ffffff', 2);
-        }
-
-        console.log('Canvas dimensions:', volume.getDimensions());
     </script>
 </body>
 </html>
