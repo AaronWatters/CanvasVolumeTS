@@ -6,6 +6,10 @@
  * z is the slowest axis.
  */
 
+import { npyjs } from '.';
+
+export * as npyjs from 'npyjs';
+
 export class Volume3D {
   width: number;
   height: number;
@@ -91,4 +95,26 @@ export class Volume3D {
     }
     return new ImageData(new Uint8ClampedArray(rgbaData), this.width, this.height);
   }
-}
+};
+
+export async function loadNpyVolume(url: string): Promise<Volume3D> {
+  //const npy = new npyjs.NPYJS();
+  const array = await npyjs.load(url);
+  // check that array is a Uint8Array
+  if (!(array.data instanceof Uint8Array)) {
+    throw new Error('Loaded data is not a Uint8Array');
+  }
+  // get shape
+  const shape = array.shape;
+  // shape must be (width, height, depth) or (width, height, depth, channels)
+  const ln = shape.length;
+  if (ln === 3) {
+    const [depth, height, width] = shape;
+    return new Volume3D(width!, height!, depth!, 1, array.data);
+  } else if (ln === 4) {
+    const [depth, height, width, channels] = shape;
+    return new Volume3D(width!, height!, depth!, channels!, array.data);
+  } else {
+    throw new Error(`Unsupported shape: ${shape}`);
+  }
+};
