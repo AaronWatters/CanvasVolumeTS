@@ -10,5 +10,6 @@ export default defineConfig({
   minify: false,
   platform: 'browser',
   target: 'es2020',
+  noExternal: () => true, // bundle all dependencies
   globalName: 'CanvasVolumeTS',
 });
