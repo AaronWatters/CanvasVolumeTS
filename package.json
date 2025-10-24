@@ -37,5 +37,8 @@
   "devDependencies": {
     "tsdown": "^0.15.9",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "npyjs": "^1.0.4"
   }
 }
