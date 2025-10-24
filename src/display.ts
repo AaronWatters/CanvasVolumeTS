@@ -26,7 +26,7 @@ export class CanvasVolume {
   };
 
   setVolumeData(volumeData: volume.Volume3D) {
-    const loaded = (volumeData.data !== null);
+    const loaded = (this.volumeData !== null);
     this.volumeData = volumeData;
     // if this is the first time loading data, center the view
     if (!loaded) {
