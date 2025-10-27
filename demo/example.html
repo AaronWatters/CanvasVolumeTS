@@ -43,20 +43,22 @@
     </div>
 
     <!-- Using IIFE version for direct browser usage -->
-    <script src="dist/index.iife.js"></script>
+    <script src="../dist/index.iife.js"></script>
     <script>
         // Using the global CanvasVolumeTS object from the IIFE bundle
         //const { CanvasVolume } = CanvasVolumeTS;
 
         // load a sample volume.
-        const url = "./example_data/labels.npy";
+        const url = "../example_data/labels.npy";
         CanvasVolumeTS.volume.loadNpyVolume(url).then(volume => {
             // display it on the canvas
             debugger;
             const canvas = document.getElementById("myCanvas");
-            const display = new CanvasVolumeTS.display.CanvasVolume(canvas);
+            const display = new CanvasVolumeTS.display.CanvasVolume(canvas, "red");
             display.setVolumeData(volume);
             display.draw();
+            display.setupWheelZoom();
+            display.setupDragPan();
             // add a slider after the canvas to control the slice
             const slider = document.createElement("input");
             slider.type = "range";
@@ -70,6 +72,50 @@
             });
             const container = document.getElementById("main-container");
             container.appendChild(slider);
+            // add a slider that adjusts the zoom from 1x to 5x
+            const zoomSlider = document.createElement("input");
+            zoomSlider.type = "range";
+            zoomSlider.min = 1;
+            zoomSlider.max = 5;
+            zoomSlider.value = 1;
+            zoomSlider.step = 0.02;
+            zoomSlider.style.width = "80%";
+            zoomSlider.addEventListener("input", (event) => {
+                display.setZoom(parseFloat(event.target.value));
+                display.draw();
+            });
+            container.appendChild(zoomSlider);
+            function changeCenter(cx,cy) {
+                display.center(cx,cy);
+                display.draw();
+            };
+            // add sliders to change the center x and y
+            const centerXSlider = document.createElement("input");
+            centerXSlider.type = "range";
+            centerXSlider.min = 0;
+            centerXSlider.max = volume.width - 1;
+            centerXSlider.value = Math.floor(volume.width / 2);
+            centerXSlider.style.width = "80%";
+            centerXSlider.addEventListener("input", (event) => {
+                // get x and y from sliders
+                const cx = parseInt(centerXSlider.value);
+                const cy = parseInt(centerYSlider.value);
+                changeCenter(cx, cy);
+            });
+            container.appendChild(centerXSlider);
+            const centerYSlider = document.createElement("input");
+            centerYSlider.type = "range";
+            centerYSlider.min = 0;
+            centerYSlider.max = volume.height - 1;
+            centerYSlider.value = Math.floor(volume.height / 2);
+            centerYSlider.style.width = "80%";
+            centerYSlider.addEventListener("input", (event) => {
+                // get x and y from sliders
+                const cx = parseInt(centerXSlider.value);
+                const cy = parseInt(centerYSlider.value);
+                changeCenter(cx, cy);
+            });
+            container.appendChild(centerYSlider);
         });
 
     </script>

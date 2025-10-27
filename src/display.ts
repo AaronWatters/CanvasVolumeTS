@@ -9,13 +9,13 @@ export class CanvasVolume {
   context: CanvasRenderingContext2D;
   volumeData: volume.Volume3D | null;
   pixelScale: number = 1.0;
-  pixelOffsetX: number = 0;
-  pixelOffsetY: number = 0;
   currentSlice: number = 0;
   pixelCenterX: number = 0;
   pixelCenterY: number = 0;
+  backgroundColor: string;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, backgroundColor: string = 'black') {
+    this.backgroundColor = backgroundColor;
     this.canvas = canvas;
     const ctx = this.canvas.getContext('2d');
     if (!ctx) {
@@ -32,8 +32,6 @@ export class CanvasVolume {
     if (!loaded) {
        this.pixelCenterX = volumeData.width / 2;
        this.pixelCenterY = volumeData.height / 2;
-       this.pixelOffsetX = 0;
-       this.pixelOffsetY = 0;
        this.currentSlice = Math.floor(volumeData.depth / 2);
     }
   };
@@ -45,12 +43,17 @@ export class CanvasVolume {
     };
   };
 
+  setZoom(zoom: number) {
+    console.log('setZoom', zoom, this);
+    if (zoom < 1) {
+      throw new Error('zoom must be >= 1');
+    }
+    this.pixelScale = zoom;
+  };
+
   center(pixelX: number, pixelY: number) {
-    const canvasCenterX = this.canvas.width / 2;
-    const canvasCenterY = this.canvas.height / 2;
-    const canvasScale = this.pixelScale / 2;
-    this.pixelOffsetX = canvasCenterX - (pixelX * canvasScale);
-    this.pixelOffsetY = canvasCenterY - (pixelY * canvasScale);
+    this.pixelCenterX = pixelX;
+    this.pixelCenterY = pixelY;
   };
 
   sliceAt(z: number) {
@@ -69,17 +72,77 @@ export class CanvasVolume {
     }
     const sliceData = this.volumeData.getImageDataAtSlice(this.currentSlice);
     // draw the sliceData to the canvas with scaling and offset
-    const offscreenCanvas = document.createElement('canvas');
-    offscreenCanvas.width = this.volumeData.width;
-    offscreenCanvas.height = this.volumeData.height;
+    // save the context state
+    this.context.save();
+    // clear the canvas
+    this.context.fillStyle = this.backgroundColor;
+    this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    debugger;
+    const cx = this.pixelCenterX
+    const cy = this.pixelCenterY;
+    const s = this.pixelScale;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    // adjust top left pixel offset
+    const offsetx = cx - (w / (2 * s));
+    const offsety = cy - (h / (2 * s));
+    console.log("translate to ", offsetx, offsety, " scale ", s);
+    // translate to center
+    this.context.translate(-offsetx*s, -offsety*s);
+    // scale by s
+    this.context.scale(s, s);
+    // translate to center
+    //this.context.translate(-offsetx, -offsety);
     const imageBitmap = await createImageBitmap(sliceData);
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.context.drawImage(
       imageBitmap,
       0, 0, this.volumeData.width, this.volumeData.height,
-      this.pixelOffsetX, this.pixelOffsetY,
-      this.volumeData.width * this.pixelScale,
-      this.volumeData.height * this.pixelScale
+      0, 0,
+      this.volumeData.width,
+      this.volumeData.height
     );
+    // restore the context state
+    this.context.restore();
+  };
+
+  /** Set up event callbacks so wheel events cause zooming. */
+  setupWheelZoom() {
+    this.canvas.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      const delta = event.deltaY > 0 ? -0.1 : 0.1;
+      const newZoom = Math.max(1, this.pixelScale + delta);
+      this.setZoom(newZoom);
+      this.draw();
+    });
+  };
+
+  /** Set up event callbacks so drag events cause panning. */
+  setupDragPan() {
+    let isDragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    this.canvas.addEventListener('mousedown', (event) => {
+      isDragging = true;
+      lastX = event.clientX;
+      lastY = event.clientY;
+    });
+    this.canvas.addEventListener('mousemove', (event) => {
+      if (isDragging) {
+        const deltaX = (event.clientX - lastX) / this.pixelScale;
+        const deltaY = (event.clientY - lastY) / this.pixelScale;
+        this.pixelCenterX -= deltaX;
+        this.pixelCenterY -= deltaY;
+        lastX = event.clientX;
+        lastY = event.clientY;
+        this.draw();
+      }
+    });
+    this.canvas.addEventListener('mouseup', (event) => {
+      isDragging = false;
+    });
+    this.canvas.addEventListener('mouseleave', (event) => {
+      isDragging = false;
+    });
   };
 };
