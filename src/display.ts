@@ -8,7 +8,9 @@ export class CanvasVolume {
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
   volumeData: volume.Volume3D | null;
-  imageBitmapCache: ImageBitmap | null = null;
+  //imageBitmapCache: ImageBitmap | null = null;
+  // mapping from index to previously loaded image bitmap
+  BitMapMapping: Map<number, ImageBitmap> = new Map();
   pixelScale: number = 1.0;
   currentSlice: number = 0;
   pixelCenterX: number = 0;
@@ -34,9 +36,13 @@ export class CanvasVolume {
        this.pixelCenterX = volumeData.width / 2;
        this.pixelCenterY = volumeData.height / 2;
        this.currentSlice = Math.floor(volumeData.depth / 2);
+       // set intial zoom to center the volume in the canvas
+       const scaleX = this.canvas.width / volumeData.width;
+       const scaleY = this.canvas.height / volumeData.height;
+       this.pixelScale = Math.min(scaleX, scaleY);
     }
     // null the image bitmap cache
-    this.imageBitmapCache = null;
+    //this.imageBitmapCache = null;
   };
 
   canvasShape(): {width: number, height: number} {
@@ -48,8 +54,8 @@ export class CanvasVolume {
 
   setZoom(zoom: number) {
     console.log('setZoom', zoom, this);
-    if (zoom < 1) {
-      throw new Error('zoom must be >= 1');
+    if (zoom <= 0) {
+      throw new Error('zoom must be > 0');
     }
     this.pixelScale = zoom;
   };
@@ -59,17 +65,13 @@ export class CanvasVolume {
     this.pixelCenterY = pixelY;
   };
 
-  async sliceAt(z: number) {
+  sliceAt(z: number) {
     if (!this.volumeData) {
       throw new Error('No volume data set');
     }
     const intslice = Math.floor(z);
     if (intslice < 0 || intslice >= this.volumeData.depth) {
       throw new Error(`Slice z=${z} out of bounds (0 to ${this.volumeData.depth - 1})`);
-    }
-    if (intslice !== this.currentSlice) {
-      // null the image bitmap cache
-      this.imageBitmapCache = null;
     }
     this.currentSlice = intslice;
   };
@@ -78,11 +80,11 @@ export class CanvasVolume {
     if (!this.volumeData) {
       throw new Error('No volume data set');
     }
-    let imageBitmap = this.imageBitmapCache;
+    let imageBitmap = this.BitMapMapping.get(this.currentSlice);
     if (!imageBitmap) {
       const sliceData = this.volumeData.getImageDataAtSlice(this.currentSlice);
       imageBitmap = await createImageBitmap(sliceData);
-      this.imageBitmapCache = imageBitmap;
+      this.BitMapMapping.set(this.currentSlice, imageBitmap);
     }
     //const sliceData = this.volumeData.getImageDataAtSlice(this.currentSlice);
     // draw the sliceData to the canvas with scaling and offset
@@ -109,12 +111,29 @@ export class CanvasVolume {
     //this.context.translate(-offsetx, -offsety);
     //const imageBitmap = await createImageBitmap(sliceData);
     //this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // get dx, dy, dWidth, dHeight to center the image on the canvas
+    //debugger;
+    //const aspectRatio = this.canvas.width / this.canvas.height;
+    //const vAspectRatio = this.volumeData.width / this.volumeData.height;
+    let dx = 0;
+    let dy = 0;
+    let dWidth = this.canvas.width;
+    let dHeight = this.canvas.height;
+    /*
+    if (aspectRatio > vAspectRatio) {
+      // canvas is wider than volume aspect ratio
+      dWidth = this.canvas.height * vAspectRatio;
+      dx = (this.canvas.width - dWidth) / 2;
+    } else {
+      // canvas is taller than volume aspect ratio
+      dHeight = this.canvas.width / vAspectRatio;
+      dy = (this.canvas.height - dHeight) / 2;
+    }
+      */
     this.context.drawImage(
       imageBitmap,
       0, 0, this.volumeData.width, this.volumeData.height,
-      0, 0,
-      this.volumeData.width,
-      this.volumeData.height
+      //dx, dy, dWidth, dHeight
     );
     // restore the context state
     this.context.restore();
@@ -125,7 +144,8 @@ export class CanvasVolume {
     this.canvas.addEventListener('wheel', (event) => {
       event.preventDefault();
       const delta = event.deltaY > 0 ? -0.1 : 0.1;
-      const newZoom = Math.max(1, this.pixelScale + delta);
+      const factor = (1 + delta);
+      const newZoom = Math.max(1e-5, this.pixelScale * factor);
       this.setZoom(newZoom);
       this.draw();
     });
