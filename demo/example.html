@@ -49,10 +49,11 @@
         //const { CanvasVolume } = CanvasVolumeTS;
 
         // load a sample volume.
-        const url = "../example_data/labels.npy";
+        //const url = "../example_data/labels.npy";
+        const url = "../example_data/chunk_37_40.npy";
         CanvasVolumeTS.volume.loadNpyVolume(url).then(volume => {
             // display it on the canvas
-            debugger;
+            //debugger;
             const canvas = document.getElementById("myCanvas");
             const display = new CanvasVolumeTS.display.CanvasVolume(canvas, "red");
             display.setVolumeData(volume);
@@ -71,11 +72,13 @@
                 display.draw();
             });
             const container = document.getElementById("main-container");
+            container.insertAdjacentHTML('beforeend', '<br/><b>level</b>');
             container.appendChild(slider);
             // add a slider that adjusts the zoom from 1x to 5x
+            container.insertAdjacentHTML('beforeend', '<br/><b>zoom</b>');
             const zoomSlider = document.createElement("input");
             zoomSlider.type = "range";
-            zoomSlider.min = 1;
+            zoomSlider.min = 0.02;
             zoomSlider.max = 5;
             zoomSlider.value = 1;
             zoomSlider.step = 0.02;
@@ -102,6 +105,7 @@
                 const cy = parseInt(centerYSlider.value);
                 changeCenter(cx, cy);
             });
+            container.insertAdjacentHTML('beforeend', '<br/><b>center x</b>');
             container.appendChild(centerXSlider);
             const centerYSlider = document.createElement("input");
             centerYSlider.type = "range";
@@ -115,6 +119,7 @@
                 const cy = parseInt(centerYSlider.value);
                 changeCenter(cx, cy);
             });
+            container.insertAdjacentHTML('beforeend', '<br/><b>center y</b>');
             container.appendChild(centerYSlider);
         });
 
