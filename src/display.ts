@@ -8,6 +8,7 @@ export class CanvasVolume {
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
   volumeData: volume.Volume3D | null;
+  imageBitmapCache: ImageBitmap | null = null;
   pixelScale: number = 1.0;
   currentSlice: number = 0;
   pixelCenterX: number = 0;
@@ -34,6 +35,8 @@ export class CanvasVolume {
        this.pixelCenterY = volumeData.height / 2;
        this.currentSlice = Math.floor(volumeData.depth / 2);
     }
+    // null the image bitmap cache
+    this.imageBitmapCache = null;
   };
 
   canvasShape(): {width: number, height: number} {
@@ -56,28 +59,39 @@ export class CanvasVolume {
     this.pixelCenterY = pixelY;
   };
 
-  sliceAt(z: number) {
+  async sliceAt(z: number) {
     if (!this.volumeData) {
       throw new Error('No volume data set');
     }
-    if (z < 0 || z >= this.volumeData.depth) {
+    const intslice = Math.floor(z);
+    if (intslice < 0 || intslice >= this.volumeData.depth) {
       throw new Error(`Slice z=${z} out of bounds (0 to ${this.volumeData.depth - 1})`);
     }
-    this.currentSlice = Math.floor(z);
+    if (intslice !== this.currentSlice) {
+      // null the image bitmap cache
+      this.imageBitmapCache = null;
+    }
+    this.currentSlice = intslice;
   };
 
   async draw() {
     if (!this.volumeData) {
       throw new Error('No volume data set');
     }
-    const sliceData = this.volumeData.getImageDataAtSlice(this.currentSlice);
+    let imageBitmap = this.imageBitmapCache;
+    if (!imageBitmap) {
+      const sliceData = this.volumeData.getImageDataAtSlice(this.currentSlice);
+      imageBitmap = await createImageBitmap(sliceData);
+      this.imageBitmapCache = imageBitmap;
+    }
+    //const sliceData = this.volumeData.getImageDataAtSlice(this.currentSlice);
     // draw the sliceData to the canvas with scaling and offset
     // save the context state
     this.context.save();
     // clear the canvas
     this.context.fillStyle = this.backgroundColor;
     this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    debugger;
+    //debugger;
     const cx = this.pixelCenterX
     const cy = this.pixelCenterY;
     const s = this.pixelScale;
@@ -93,8 +107,8 @@ export class CanvasVolume {
     this.context.scale(s, s);
     // translate to center
     //this.context.translate(-offsetx, -offsety);
-    const imageBitmap = await createImageBitmap(sliceData);
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    //const imageBitmap = await createImageBitmap(sliceData);
+    //this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.context.drawImage(
       imageBitmap,
       0, 0, this.volumeData.width, this.volumeData.height,
