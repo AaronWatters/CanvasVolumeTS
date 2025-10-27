@@ -11,7 +11,6 @@ Built with TypeScript and compiled to vanilla JavaScript using [tsdown](https://
 - 🌐 Browser-ready vanilla JavaScript
 - 📘 Full TypeScript support with type definitions
 - 🗺️ Source maps included
-- ⚡ Zero runtime dependencies
 
 ## Installation
 
@@ -23,62 +22,32 @@ npm install canvasvolumets
 
 ### Browser (IIFE)
 
+Please see 
+<a href="./demo/example.html">./demo/example.html</a>
+for a complete working example.
+
 ```html
-<!DOCTYPE html>
-<html>
-<head>
-    <title>CanvasVolumeTS Example</title>
-</head>
-<body>
-    <canvas id="myCanvas"></canvas>
-    
-    <script src="node_modules/canvasvolumets/dist/index.iife.js"></script>
+<script src="../dist/index.iife.js"></script>
     <script>
-        const { CanvasVolume } = CanvasVolumeTS;
-        
-        const canvas = document.getElementById('myCanvas');
-        const volume = new CanvasVolume(canvas, {
-            width: 800,
-            height: 600,
-            backgroundColor: '#000000'
-        });
-        
-        volume.clear();
-        volume.drawPoint({ x: 100, y: 100 }, '#ff0000', 5);
-        volume.drawLine({ x: 0, y: 0 }, { x: 800, y: 600 }, '#ffffff', 2);
+        // Using the global CanvasVolumeTS object from the IIFE bundle
+        // load a sample volume.
+        const url = "../example_data/labels.npy";
+        CanvasVolumeTS.volume.loadNpyVolume(url).then(volume => {
+            ...
+        }
     </script>
-</body>
-</html>
 ```
 
 ### ES Module
 
 ```typescript
-import { CanvasVolume, createCanvasVolume } from 'canvasvolumets';
+import * as CanvasVolumeTS from "CanvasVolumeTS";
 
-// Option 1: Direct instantiation
-const canvas = document.getElementById('myCanvas') as HTMLCanvasElement;
-const volume = new CanvasVolume(canvas, {
-    width: 800,
-    height: 600
-});
-
-// Option 2: Using helper function
-const volume2 = createCanvasVolume('myCanvas', {
-    width: 800,
-    height: 600,
-    backgroundColor: '#001122'
-});
-
-// Draw operations
-volume.clear();
-volume.drawPoint({ x: 400, y: 300 }, '#ff6b6b', 5);
-volume.drawLine(
-    { x: 100, y: 100 }, 
-    { x: 700, y: 500 }, 
-    '#4ecdc4', 
-    2
-);
+async function go() {
+    const url = "../example_data/labels.npy";
+    const volume = await CanvasVolumeTS.volume.loadNpyVolume(url);
+    ...
+};
 ```
 
 ### CommonJS
