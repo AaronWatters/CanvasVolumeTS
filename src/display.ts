@@ -80,12 +80,7 @@ export class CanvasVolume {
     if (!this.volumeData) {
       throw new Error('No volume data set');
     }
-    let imageBitmap = this.BitMapMapping.get(this.currentSlice);
-    if (!imageBitmap) {
-      const sliceData = this.volumeData.getImageDataAtSlice(this.currentSlice);
-      imageBitmap = await createImageBitmap(sliceData);
-      this.BitMapMapping.set(this.currentSlice, imageBitmap);
-    }
+    const imageBitmap = await this.volumeData.getImageBitMapAtSlice(this.currentSlice);
     //const sliceData = this.volumeData.getImageDataAtSlice(this.currentSlice);
     // draw the sliceData to the canvas with scaling and offset
     // save the context state
@@ -115,10 +110,10 @@ export class CanvasVolume {
     //debugger;
     //const aspectRatio = this.canvas.width / this.canvas.height;
     //const vAspectRatio = this.volumeData.width / this.volumeData.height;
-    let dx = 0;
-    let dy = 0;
-    let dWidth = this.canvas.width;
-    let dHeight = this.canvas.height;
+    //let dx = 0;
+    //let dy = 0;
+    //let dWidth = this.canvas.width;
+    //let dHeight = this.canvas.height;
     /*
     if (aspectRatio > vAspectRatio) {
       // canvas is wider than volume aspect ratio

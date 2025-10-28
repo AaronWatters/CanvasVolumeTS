@@ -17,6 +17,7 @@ export class Volume3D {
   channels: number;
   layerSize: number;
   data: Uint8Array | null;
+  BitMapMapping: Map<number, ImageBitmap> = new Map();
 
   constructor(
     width: number, 
@@ -58,8 +59,13 @@ export class Volume3D {
     const slice = this.data.slice(indexStart, indexEnd);
     return slice;
   };
-  getImageDataAtSlice(z: number): ImageData {
-    const slice = this.getSlice(z);
+  async getImageBitMapAtSlice(z: number): ImageBitmap {
+    const index = Math.floor(z);
+    const cachedBitmap = this.BitMapMapping.get(index);
+    if (cachedBitmap) {
+      return cachedBitmap;
+    }
+    const slice = this.getSlice(index);
     let rgbaData = new Uint8Array(this.width * this.height * 4);
     const planeSize = this.width * this.height;
     if (this.channels === 1) {
@@ -93,7 +99,10 @@ export class Volume3D {
         // rgba
         rgbaData.set(slice);
     }
-    return new ImageData(new Uint8ClampedArray(rgbaData), this.width, this.height);
+    const data = new ImageData(new Uint8ClampedArray(rgbaData), this.width, this.height);
+    const bitmap = await createImageBitmap(data);
+    this.BitMapMapping.set(index, bitmap);
+    return bitmap;
   }
 };
 
