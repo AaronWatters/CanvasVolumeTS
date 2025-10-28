@@ -13,12 +13,14 @@ export class CanvasVolume {
   pixelCenterX: number = 0;
   pixelCenterY: number = 0;
   backgroundColor: string;
+  lastKeyPressed: string = '';
 
   constructor(
     canvas: HTMLCanvasElement, 
     backgroundColor: string = 'black',
     wheelZoom: boolean = true,
     dragPan: boolean = true,
+    arrowLevels: boolean = true,
 ) {
     this.backgroundColor = backgroundColor;
     this.canvas = canvas;
@@ -33,6 +35,13 @@ export class CanvasVolume {
     }
     if (dragPan) {
       this.setupDragPan();
+    }
+    if (arrowLevels) {
+      this.setupKeyboardControls();
+    }
+    // set the tabindex to make the canvas focusable if it is not already set
+    if (!this.canvas.hasAttribute('tabindex')) {
+      this.canvas.tabIndex = 0;
     }
   };
 
@@ -61,7 +70,7 @@ export class CanvasVolume {
   };
 
   setZoom(zoom: number) {
-    console.log('setZoom', zoom, this);
+    //console.log('setZoom', zoom, this);
     if (zoom <= 0) {
       throw new Error('zoom must be > 0');
     }
@@ -105,7 +114,7 @@ export class CanvasVolume {
     // adjust top left pixel offset
     const offsetx = cx - (w / (2 * s));
     const offsety = cy - (h / (2 * s));
-    console.log("translate to ", offsetx, offsety, " scale ", s);
+    //.log("translate to ", offsetx, offsety, " scale ", s);
     // translate to center
     this.context.translate(-offsetx*s, -offsety*s);
     // scale by s
@@ -160,9 +169,12 @@ export class CanvasVolume {
     let lastX = 0;
     let lastY = 0;
     this.canvas.addEventListener('mousedown', (event) => {
+      // focus the canvas to receive keyboard events
+      this.canvas.focus();
       isDragging = true;
       lastX = event.clientX;
       lastY = event.clientY;
+      //console.log('mousedown at', lastX, lastY);
     });
     this.canvas.addEventListener('mousemove', (event) => {
       if (isDragging) {
@@ -180,6 +192,38 @@ export class CanvasVolume {
     });
     this.canvas.addEventListener('mouseleave', (event) => {
       isDragging = false;
+    });
+  };
+
+  /** Set up event callbacks for keyboard interactions. */
+  setupKeyboardControls() {
+    this.canvas.addEventListener('keydown', (event) => {
+      const key = event.key;
+      if (key.startsWith('Arrow')) {
+        event.preventDefault();
+      }
+      this.lastKeyPressed = key;
+      //console.log('key pressed:', key);
+    });
+    this.canvas.addEventListener('keyup', (event) => {
+      const key = this.lastKeyPressed;
+      //if (key.startsWith('Arrow')) {
+      //  event.preventDefault();
+      //}
+      switch (key) {
+        case 'ArrowUp':
+          const maxSlice = this.volumeData ? this.volumeData.depth - 1 : 0;
+          this.currentSlice = Math.min(maxSlice, this.currentSlice + 1);
+          this.draw();
+          event.preventDefault();
+          break;
+        case 'ArrowDown':
+          this.currentSlice = Math.max(0, this.currentSlice - 1);
+          this.draw();
+          event.preventDefault();
+          break;
+      }
+      this.lastKeyPressed = '';
     });
   };
 };
