@@ -14,6 +14,8 @@ export class CanvasVolume {
   pixelCenterY: number = 0;
   backgroundColor: string;
   lastKeyPressed: string = '';
+  // hook to call upon draw completion
+  onDrawComplete: (() => void) | null = null;
 
   constructor(
     canvas: HTMLCanvasElement, 
@@ -43,6 +45,10 @@ export class CanvasVolume {
     if (!this.canvas.hasAttribute('tabindex')) {
       this.canvas.tabIndex = 0;
     }
+  };
+
+  whenDrawComplete(callback: () => void) {
+    this.onDrawComplete = callback;
   };
 
   setVolumeData(volumeData: volume.Volume3D) {
@@ -87,8 +93,14 @@ export class CanvasVolume {
       throw new Error('No volume data set');
     }
     const intslice = Math.floor(z);
-    if (intslice < 0 || intslice >= this.volumeData.depth) {
-      throw new Error(`Slice z=${z} out of bounds (0 to ${this.volumeData.depth - 1})`);
+    // clamp to valid range
+    if (intslice < 0) {
+      this.currentSlice = 0;
+      return;
+    }
+    if (intslice >= this.volumeData.depth) {
+      this.currentSlice = this.volumeData.depth - 1;
+      return;
     }
     this.currentSlice = intslice;
   };
@@ -119,29 +131,6 @@ export class CanvasVolume {
     this.context.translate(-offsetx*s, -offsety*s);
     // scale by s
     this.context.scale(s, s);
-    // translate to center
-    //this.context.translate(-offsetx, -offsety);
-    //const imageBitmap = await createImageBitmap(sliceData);
-    //this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    // get dx, dy, dWidth, dHeight to center the image on the canvas
-    //debugger;
-    //const aspectRatio = this.canvas.width / this.canvas.height;
-    //const vAspectRatio = this.volumeData.width / this.volumeData.height;
-    //let dx = 0;
-    //let dy = 0;
-    //let dWidth = this.canvas.width;
-    //let dHeight = this.canvas.height;
-    /*
-    if (aspectRatio > vAspectRatio) {
-      // canvas is wider than volume aspect ratio
-      dWidth = this.canvas.height * vAspectRatio;
-      dx = (this.canvas.width - dWidth) / 2;
-    } else {
-      // canvas is taller than volume aspect ratio
-      dHeight = this.canvas.width / vAspectRatio;
-      dy = (this.canvas.height - dHeight) / 2;
-    }
-      */
     this.context.drawImage(
       imageBitmap,
       0, 0, this.volumeData.width, this.volumeData.height,
@@ -149,6 +138,10 @@ export class CanvasVolume {
     );
     // restore the context state
     this.context.restore();
+    // call the draw complete callback if set
+    if (this.onDrawComplete) {
+      this.onDrawComplete();
+    }
   };
 
   /** Set up event callbacks so wheel events cause zooming. */
