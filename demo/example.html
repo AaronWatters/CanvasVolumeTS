@@ -36,8 +36,8 @@
     <div class="container" id="main-container">
         <h1>CanvasVolumeTS Example</h1>
         <div class="info">
-            <p>This example demonstrates the CanvasVolumeTS library built with TypeScript and tsdown.</p>
-            <p>The library is compiled to vanilla JavaScript for browser use.</p>
+            <p>This example demonstrates the CanvasVolumeTS library.</p>
+            <p>Use the mouse wheel to zoom in and out, and click and drag to pan around the volume.</p>
         </div>
         <canvas id="myCanvas" width="500" height="500"></canvas>
     </div>
@@ -49,8 +49,8 @@
         //const { CanvasVolume } = CanvasVolumeTS;
 
         // load a sample volume.
-        //const url = "../example_data/labels.npy";
-        const url = "../example_data/chunk_37_40.npy";
+        const url = "../example_data/labels.npy";
+        //const url = "../example_data/chunk_37_40.npy";
         CanvasVolumeTS.volume.loadNpyVolume(url).then(volume => {
             // display it on the canvas
             //debugger;
@@ -58,8 +58,6 @@
             const display = new CanvasVolumeTS.display.CanvasVolume(canvas, "red");
             display.setVolumeData(volume);
             display.draw();
-            display.setupWheelZoom();
-            display.setupDragPan();
             // add a slider after the canvas to control the slice
             const slider = document.createElement("input");
             slider.type = "range";

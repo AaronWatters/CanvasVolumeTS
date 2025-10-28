@@ -8,16 +8,18 @@ export class CanvasVolume {
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
   volumeData: volume.Volume3D | null;
-  //imageBitmapCache: ImageBitmap | null = null;
-  // mapping from index to previously loaded image bitmap
-  BitMapMapping: Map<number, ImageBitmap> = new Map();
   pixelScale: number = 1.0;
   currentSlice: number = 0;
   pixelCenterX: number = 0;
   pixelCenterY: number = 0;
   backgroundColor: string;
 
-  constructor(canvas: HTMLCanvasElement, backgroundColor: string = 'black') {
+  constructor(
+    canvas: HTMLCanvasElement, 
+    backgroundColor: string = 'black',
+    wheelZoom: boolean = true,
+    dragPan: boolean = true,
+) {
     this.backgroundColor = backgroundColor;
     this.canvas = canvas;
     const ctx = this.canvas.getContext('2d');
@@ -26,6 +28,12 @@ export class CanvasVolume {
     }
     this.context = ctx;
     this.volumeData = null;
+    if (wheelZoom) {
+      this.setupWheelZoom();
+    }
+    if (dragPan) {
+      this.setupDragPan();
+    }
   };
 
   setVolumeData(volumeData: volume.Volume3D) {
