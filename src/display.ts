@@ -14,6 +14,7 @@ export class CanvasVolume {
   pixelCenterY: number = 0;
   backgroundColor: string;
   lastKeyPressed: string = '';
+  zoomSensitivity: number = 0.02;
   // hook to call upon draw completion
   onDrawComplete: (() => void) | null = null;
 
@@ -148,7 +149,7 @@ export class CanvasVolume {
   setupWheelZoom() {
     this.canvas.addEventListener('wheel', (event) => {
       event.preventDefault();
-      const delta = event.deltaY > 0 ? -0.1 : 0.1;
+      const delta = event.deltaY > 0 ? -this.zoomSensitivity : this.zoomSensitivity;
       const factor = (1 + delta);
       const newZoom = Math.max(1e-5, this.pixelScale * factor);
       this.setZoom(newZoom);
